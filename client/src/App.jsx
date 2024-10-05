@@ -1,11 +1,17 @@
 import React from 'react'
 import "./App.css";
-import { io } from "socket.io-client";
-
+import { Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import Chat from "./pages/Chat";
 function App() {
-  const socket = io("http://localhost:3001");
+
   return (
-    <div>App</div>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/c/:id" element={<Chat />} />
+
+      <Route path="*" element={<Home />} />
+    </Routes>
   )
 }
 
