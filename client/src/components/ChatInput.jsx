@@ -1,7 +1,10 @@
+import React from 'react';
 import { FiSend } from 'react-icons/fi'; // Send icon
 import { BsEmojiSmile } from 'react-icons/bs'; // Emoji icon
 
+
 function ChatInput() {
+ 
   return (
     <div className="p-4 bg-white border-t border-gray-200">
       <div className="flex items-center space-x-3">
