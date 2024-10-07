@@ -17,14 +17,23 @@ export const handleConnection = (socket, io) => {
 
     // Convert Set to Array for emitting
     const usersArray = Array.from(room[roomId]);
-    io.to(socket.id).emit('room-users', usersArray);
+    io.to(socket.id).emit("room-users", usersArray);
   });
-
+  socket.on("send-message", ({message, username, roomId}) => {
+    io.to(roomId).emit('receive-message', message, username);
+  });
   socket.on("disconnect", () => {
-    for (const roomId in room) {
-      if (room[roomId].has(socket.username)) {
-        room[roomId].delete(socket.username); // Remove the username from the Set
-        io.to(roomId).emit("user-left", socket.username); // Notify others if needed
+    const roomId = socket.roomId;
+
+    if (room[roomId]) {
+      room[roomId].delete(socket.username); // Remove the username from the Set
+
+      // Notify other users in the room that the user has left
+      io.to(roomId).emit("user-left", socket.username);
+
+      // If the room is empty, delete it
+      if (room[roomId].size === 0) {
+        delete room[roomId];
       }
     }
   });
