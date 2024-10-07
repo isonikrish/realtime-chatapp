@@ -3,17 +3,17 @@ const room = {};
 export const handleConnection = (socket, io) => {
   socket.on("join-room", (username, roomId) => {
     socket.join(roomId);
-    
+
     // Initialize the room if it doesn't exist
     if (!room[roomId]) {
       room[roomId] = {}; // Use an object for storing usernames and their socket IDs
     }
-    
+
     // Store the username and socket ID in the room object
     room[roomId][username] = socket.id;
     socket.username = username; // Set username on socket
     socket.roomId = roomId; // Set roomId on socket
-    
+
     io.to(roomId).emit("user-joined", username);
 
     // Send the updated list of users in the room to the client
@@ -25,17 +25,37 @@ export const handleConnection = (socket, io) => {
     io.to(roomId).emit("receive-message", message, username);
   });
 
-  socket.on("send-private-message", ({ message, username, recipient, roomId }) => {
-    const recipientSocketId = room[roomId][recipient]; // Get the socket.id of the recipient
-    if (recipientSocketId) {
-      // Send the private message to the recipient only
-      io.to(recipientSocketId).emit("receive-private-message", message, username);
+  socket.on(
+    "send-private-message",
+    ({ message, username, recipient, roomId }) => {
+      console.log(
+        `Sending private message from ${username} to ${recipient} in room ${roomId}`
+      ); // Log sender and recipient
+      const recipientSocketId = room[roomId][recipient]; // Get the socket.id of the recipient
 
-      // Send the private message to the sender as well
-      socket.emit("receive-private-message", message, username);
+      if (recipientSocketId) {
+        // Send the private message to the recipient only
+        io.to(recipientSocketId).emit(
+          "receive-private-message",
+          message,
+          username
+        );
+
+        // Send the private message to the sender as well (for confirmation)
+        socket.emit("receive-private-message", message, username);
+      } else {
+        // Notify the sender that the recipient is not found
+        socket.emit(
+          "error-message",
+          `User ${recipient} is not available in the room.`
+        );
+      }
     }
+  );
+  socket.on("typing", (username,roomId) => {
+    socket.broadcast.to(roomId).emit("typing", username); // Broadcast typing status to others in the room
   });
-
+  
   socket.on("disconnect", () => {
     const { roomId, username } = socket; // Access username and roomId from the socket
 
