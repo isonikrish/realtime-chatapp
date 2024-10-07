@@ -36,14 +36,22 @@ function Chat({ socket }) {
     socket.on('room-users', (existingUsers) => {
       setUsers(existingUsers);
     });
+    
     socket.on('receive-message', (message, username) => {
-      const newMessage = { username, message };
+      const newMessage = { username, message, type: 'public' }; // Add type for public messages
       setMessages((prevMessages) => [...prevMessages, newMessage]);
     });
+
+    socket.on('receive-private-message', (message, username) => {
+      const newMessage = { username, message, type: 'private' }; // Add type for private messages
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+    });
+
     return () => {
       socket.off('user-joined');
       socket.off('room-users');
       socket.off('receive-message');
+      socket.off('receive-private-message');
     };
   }, [id, navigate, socket, users]);
   useEffect(() => {
@@ -75,22 +83,22 @@ function Chat({ socket }) {
 
 
         <div className="flex-1 overflow-y-auto mb-4 p-10" ref={messageAreaRef}>
-          {messages.map((msg,index)=>{
-              const isOutgoing = msg.username === localStorage.getItem('username');
-              return(
-                <div className={`flex mb-2 ${isOutgoing ? 'justify-end' : 'justify-start'}`}  key={index}>
-                 <div
+        {messages.map((msg, index) => {
+            const isOutgoing = msg.username === localStorage.getItem('username');
+            return (
+              <div className={`flex mb-2 ${isOutgoing ? 'justify-end' : 'justify-start'}`} key={index}>
+                <div
                   className={`p-2 rounded-lg max-w-xs ${
-                    isOutgoing ? 'bg-blue-500 text-white' : 'bg-gray-300 text-black'
+                    isOutgoing ? 'bg-blue-500 text-white' : (msg.type === 'private' ? 'bg-green-300 text-black' : 'bg-gray-300 text-black')
                   }`}
                 >
-                   <p>{msg.message}</p>
+                  <p>{msg.message}</p>
                   <p className={`font-bold ${isOutgoing ? 'text-white' : 'text-black'}`}>
                     - {msg.username}
                   </p>
                 </div>
               </div>
-              )
+            );
           })}
         
         </div>

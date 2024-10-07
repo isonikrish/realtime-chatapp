@@ -6,20 +6,44 @@ import { BsEmojiSmile } from 'react-icons/bs'; // Emoji icon
 function ChatInput({socket,roomId}) {
   const username = localStorage.getItem('username');
   const [message, setMessage] = useState('');
+  const [users, setUsers] = useState([])
+  const [recipient,setRecipient] = useState('');
+  socket.on('room-users', (existingUsers) => {
+    setUsers(existingUsers);
+  });
   const sendMessage = (e) => {
     e.preventDefault();
     if (message.trim()) {
-      console.log('Sending message:', { message, username, roomId }); // Debugging log
-      socket.emit('send-message', { message, username, roomId });
+
+      if (recipient) {
+        
+        socket.emit('send-private-message', { message, username, recipient, roomId });
+      } else {
+        // Emit public message
+        socket.emit('send-message', { message, username, roomId });
+      }
+
       setMessage(''); // Optionally clear the input after sending the message
     }
   };
   return (
     <div className="p-4 bg-white border-t border-gray-200">
-      <div className="flex items-center space-x-3">
-        <form onSubmit={sendMessage}>
+      <div >
+        <form onSubmit={sendMessage} className="flex items-center space-x-3">
 
-        
+        {/* Select recipient for private message */}
+        <select
+            className="p-2 border border-gray-300 rounded-md"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+          >
+            <option value="">Public (Everyone)</option>
+            {users.map((user, index) => (
+              <option key={index} value={user}>
+                {user}
+              </option>
+            ))}
+          </select>
         <input
           type="text"
           placeholder="Type a message..."
